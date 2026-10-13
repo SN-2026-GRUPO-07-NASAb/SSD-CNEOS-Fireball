@@ -1,0 +1,42 @@
+# Atualiza diariamente a base de bólidos (Fireball API -> Supabase).
+name: Atualizar dados da Fireball API
+
+on:
+  schedule:
+    # Todos os dias às 06:17 UTC (03:17 em Brasília); minuto diferente de 0
+    # para fugir do horário de pico do agendador do GitHub.
+    - cron: "17 6 * * *"
+  workflow_dispatch: # permite rodar manualmente pela aba Actions
+
+# Menor privilégio: o workflow só precisa ler o repositório.
+permissions:
+  contents: read
+
+# Nunca duas execuções ao mesmo tempo; a nova espera a anterior terminar.
+concurrency:
+  group: update-data
+  cancel-in-progress: false
+
+jobs:
+  atualizar:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: Baixar o repositório
+        uses: actions/checkout@v4
+
+      - name: Instalar Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+
+      - name: Instalar dependências
+        run: pip install -r requirements.txt
+
+      - name: Coletar dados e gravar no Supabase
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_KEY: ${{ secrets.SUPABASE_SERVICE_KEY }}
+        run: python scripts/fetch_nasa.py
