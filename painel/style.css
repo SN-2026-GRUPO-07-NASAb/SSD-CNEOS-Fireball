@@ -1,0 +1,118 @@
+/* ---------- Cores e medidas (tema claro e escuro) ---------- */
+:root {
+  --fundo: #f5f6f8;
+  --superficie: #ffffff;
+  --texto: #1b1f24;
+  --texto-suave: #5b6470;
+  --borda: #dde1e6;
+  --destaque: #c2410c;
+  --ok: #15803d;
+  --alerta: #b45309;
+  --erro: #b91c1c;
+  --barra: #ea580c;
+  --raio: 10px;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --fundo: #111418;
+    --superficie: #1a1f25;
+    --texto: #e8eaed;
+    --texto-suave: #9aa3ad;
+    --borda: #2d343c;
+    --destaque: #fb923c;
+    --ok: #4ade80;
+    --alerta: #fbbf24;
+    --erro: #f87171;
+    --barra: #fb923c;
+  }
+}
+
+* { box-sizing: border-box; }
+body {
+  margin: 0;
+  background: var(--fundo);
+  color: var(--texto);
+  font: 15px/1.5 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+}
+main { max-width: 1200px; margin: 0 auto; padding: 16px; }
+h1 { font-size: 1.7rem; margin: 8px 0 4px; }
+h2 { font-size: 1.15rem; margin: 0 0 12px; }
+a { color: var(--destaque); }
+.suave { color: var(--texto-suave); }
+.painel {
+  background: var(--superficie);
+  border: 1px solid var(--borda);
+  border-radius: var(--raio);
+  padding: 16px;
+  margin-bottom: 16px;
+}
+
+/* ---------- Cabeçalho e última atualização ---------- */
+.intro { max-width: 75ch; margin: 0 0 12px; }
+.atualizacao { font-size: .9rem; display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+.selo {
+  display: inline-block; padding: 1px 8px; border-radius: 999px;
+  font-size: .8rem; font-weight: 600; border: 1px solid currentColor;
+}
+.selo.concluido { color: var(--ok); }
+.selo.erro_parcial { color: var(--alerta); }
+.selo.erro_critico { color: var(--erro); }
+
+/* ---------- Mensagens de carregamento e erro ---------- */
+.aviso { padding: 12px 16px; border-radius: var(--raio); margin-bottom: 16px; border: 1px solid var(--borda); background: var(--superficie); }
+.aviso.erro { border-color: var(--erro); color: var(--erro); }
+[hidden] { display: none !important; }
+
+/* ---------- Filtros ---------- */
+.filtros { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 12px; align-items: end; }
+.filtros label { display: block; font-size: .85rem; color: var(--texto-suave); margin-bottom: 4px; }
+.filtros select, .filtros input, .botao {
+  width: 100%; padding: 8px 10px; font: inherit; color: var(--texto);
+  background: var(--fundo); border: 1px solid var(--borda); border-radius: 8px;
+}
+.botao { cursor: pointer; background: var(--superficie); }
+.botao:hover { border-color: var(--destaque); }
+
+/* ---------- Cards de resumo ---------- */
+.cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px; margin-bottom: 16px; }
+.card { background: var(--superficie); border: 1px solid var(--borda); border-radius: var(--raio); padding: 14px 16px; }
+.card .rotulo { font-size: .85rem; color: var(--texto-suave); }
+.card .valor { font-size: 1.6rem; font-weight: 700; font-variant-numeric: tabular-nums; }
+.card .detalhe { font-size: .85rem; color: var(--texto-suave); }
+
+/* ---------- Mapa e gráfico ---------- */
+.grade { display: grid; grid-template-columns: 3fr 2fr; gap: 16px; }
+.grade > .painel { margin-bottom: 0; min-width: 0; }
+#mapa { height: 420px; border-radius: 8px; z-index: 0; }
+.grafico-caixa { position: relative; height: 420px; }
+.legenda { background: #fff; color: #1b1f24; padding: 6px 8px; border-radius: 6px; font-size: 12px; line-height: 1.6; box-shadow: 0 1px 4px rgba(0,0,0,.3); }
+.legenda i { display: inline-block; width: 12px; height: 12px; border-radius: 50%; margin-right: 6px; vertical-align: -1px; border: 1px solid rgba(0,0,0,.35); }
+.popup dl { margin: 0; display: grid; grid-template-columns: auto auto; gap: 2px 10px; }
+.popup dt { color: #5b6470; }
+.popup dd { margin: 0; font-variant-numeric: tabular-nums; }
+
+/* ---------- Tabela ---------- */
+.tabela-caixa { overflow: auto; max-height: 560px; border: 1px solid var(--borda); border-radius: 8px; }
+table { border-collapse: collapse; width: 100%; font-size: .9rem; }
+th, td { padding: 8px 10px; border-bottom: 1px solid var(--borda); text-align: right; white-space: nowrap; }
+th:first-child, td:first-child { text-align: left; }
+thead th { position: sticky; top: 0; background: var(--superficie); font-weight: 600; z-index: 1; }
+td { font-variant-numeric: tabular-nums; }
+th button { all: unset; cursor: pointer; color: var(--destaque); }
+th button:focus-visible { outline: 2px solid var(--destaque); outline-offset: 2px; }
+.seta { font-size: .75rem; }
+
+footer { font-size: .85rem; color: var(--texto-suave); padding: 8px 0 24px; }
+
+/* ---------- Celular ---------- */
+@media (max-width: 800px) {
+  .grade { grid-template-columns: 1fr; }
+  #mapa { height: 320px; }
+  .grafico-caixa { height: 260px; }
+  h1 { font-size: 1.4rem; }
+}
+
+/* ---------- Ajustes que antes estavam inline no HTML ---------- */
+.secao-tabela { margin-top: 16px; }
+.dica-tabela { margin-top: -6px; }
+.tabela-vazia { text-align: center; }

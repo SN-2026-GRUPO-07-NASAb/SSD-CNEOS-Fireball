@@ -1,0 +1,149 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Bólidos CNEOS — Grupo 07</title>
+<meta name="description" content="Painel dos bólidos (fireballs) registrados pelo CNEOS/NASA-JPL, atualizado diariamente.">
+
+<!-- Leaflet (mapa) e Chart.js (gráfico) via CDN, com verificação de integridade -->
+<link rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css"
+      integrity="sha384-c6Rcwz4e4CITMbu/NBmnNS8yN2sC3cUElMEMfP3vqqKFp7GOYaaBBCqmaWBjmkjb"
+      crossorigin="anonymous">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"
+        integrity="sha384-NElt3Op+9NBMCYaef5HxeJmU4Xeard/Lku8ek6hoPTvYkQPh3zLIrJP7KiRocsxO"
+        crossorigin="anonymous" defer></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"
+        integrity="sha384-bs/nf9FbdNouRbMiFcrcZfLXYPKiPaGVGplVbv7dLGECccEXDW+S3zjqSKR5ZEaD"
+        crossorigin="anonymous" defer></script>
+
+<!-- Lógica do painel (defer: roda depois do Leaflet e do Chart.js, na ordem) -->
+<script src="script.js" defer></script>
+
+<!-- Estilos da página -->
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<main>
+  <header>
+    <h1>☄️ Bólidos registrados pelo CNEOS</h1>
+    <p class="intro">
+      Um <strong>bólido</strong> (em inglês, <em>fireball</em>) é um meteoro excepcionalmente
+      brilhante: um fragmento de asteroide que entra na atmosfera e se desintegra liberando
+      muita energia, às vezes equivalente a quilotons de TNT. Os dados vêm da
+      <a href="https://ssd-api.jpl.nasa.gov/doc/fireball.html" target="_blank" rel="noopener">Fireball API</a>
+      do CNEOS (NASA/JPL), coletados diariamente por um pipeline no GitHub Actions e
+      armazenados no Supabase.
+    </p>
+    <p class="atualizacao" id="ultima-execucao">Carregando a última atualização…</p>
+  </header>
+
+  <div class="aviso" id="carregando" role="status">Carregando os dados…</div>
+  <div class="aviso erro" id="erro" role="alert" hidden></div>
+
+  <div id="conteudo" hidden>
+    <!-- Filtros: atualizam cards, mapa, gráfico e tabela -->
+    <section class="painel" aria-labelledby="titulo-filtros">
+      <h2 id="titulo-filtros">Filtros</h2>
+      <div class="filtros">
+        <div>
+          <label for="f-ano-ini">Ano inicial</label>
+          <select id="f-ano-ini"></select>
+        </div>
+        <div>
+          <label for="f-ano-fim">Ano final</label>
+          <select id="f-ano-fim"></select>
+        </div>
+        <div>
+          <label for="f-energia">Energia de impacto mínima (kt)</label>
+          <input id="f-energia" type="number" min="0" step="0.1" value="0" inputmode="decimal">
+        </div>
+        <div>
+          <label for="f-hemisferio">Hemisfério</label>
+          <select id="f-hemisferio">
+            <option value="todos">Todos</option>
+            <option value="norte">Norte</option>
+            <option value="sul">Sul</option>
+          </select>
+        </div>
+        <div>
+          <button class="botao" id="f-limpar" type="button">Limpar filtros</button>
+        </div>
+      </div>
+      <p class="suave" id="f-observacao" hidden>
+        Ao escolher um hemisfério, eventos sem localização conhecida ficam de fora.
+      </p>
+    </section>
+
+    <!-- Cards de resumo -->
+    <section class="cards" aria-label="Resumo">
+      <div class="card">
+        <div class="rotulo">Total de eventos</div>
+        <div class="valor" id="c-total">—</div>
+        <div class="detalhe" id="c-total-det"></div>
+      </div>
+      <div class="card">
+        <div class="rotulo">Maior energia de impacto</div>
+        <div class="valor" id="c-maior">—</div>
+        <div class="detalhe" id="c-maior-det"></div>
+      </div>
+      <div class="card">
+        <div class="rotulo">Evento mais recente</div>
+        <div class="valor" id="c-recente">—</div>
+        <div class="detalhe" id="c-recente-det"></div>
+      </div>
+      <div class="card">
+        <div class="rotulo">Com localização no mapa</div>
+        <div class="valor" id="c-local">—</div>
+        <div class="detalhe" id="c-local-det"></div>
+      </div>
+    </section>
+
+    <!-- Mapa e gráfico -->
+    <div class="grade">
+      <section class="painel" aria-labelledby="titulo-mapa">
+        <h2 id="titulo-mapa">Onde ocorreram</h2>
+        <div id="mapa" role="region" aria-label="Mapa-múndi dos bólidos"></div>
+      </section>
+      <section class="painel" aria-labelledby="titulo-grafico">
+        <h2 id="titulo-grafico">Eventos por ano</h2>
+        <div class="grafico-caixa"><canvas id="grafico" aria-label="Gráfico de eventos por ano" role="img"></canvas></div>
+      </section>
+    </div>
+
+    <!-- Tabela -->
+    <section class="painel secao-tabela" aria-labelledby="titulo-tabela">
+      <h2 id="titulo-tabela">Eventos</h2>
+      <p class="suave dica-tabela">Clique em “Data/hora” ou “Energia de impacto” para ordenar. Horários em UTC.</p>
+      <div class="tabela-caixa">
+        <table>
+          <thead>
+            <tr>
+              <th scope="col" aria-sort="descending" data-coluna="data">
+                <button type="button" data-ordenar="data">Data/hora (UTC) <span class="seta">▼</span></button>
+              </th>
+              <th scope="col" aria-sort="none" data-coluna="energia">
+                <button type="button" data-ordenar="energia">Energia de impacto (kt) <span class="seta"></span></button>
+              </th>
+              <th scope="col">Energia irradiada (10¹⁰ J)</th>
+              <th scope="col">Latitude</th>
+              <th scope="col">Longitude</th>
+              <th scope="col">Altitude (km)</th>
+              <th scope="col">Velocidade (km/s)</th>
+            </tr>
+          </thead>
+          <tbody id="t-corpo"></tbody>
+        </table>
+      </div>
+    </section>
+  </div>
+
+  <footer>
+    Fonte: CNEOS — Center for Near Earth Object Studies (NASA/JPL), Fireball API.
+    Projeto acadêmico do Grupo 07. Mapa © colaboradores do OpenStreetMap.
+  </footer>
+</main>
+
+</body>
+</html>
