@@ -3,7 +3,8 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Bólidos CNEOS — Grupo 07</title>
+<meta name="theme-color" content="#050816">
+<title>Bólidos CNEOS: Grupo 07</title>
 <meta name="description" content="Painel dos bólidos (fireballs) registrados pelo CNEOS/NASA-JPL, atualizado diariamente.">
 
 <!-- Leaflet (mapa) e Chart.js (gráfico) via CDN, com verificação de integridade -->
@@ -20,23 +21,51 @@
 
 <!-- Lógica do painel (defer: roda depois do Leaflet e do Chart.js, na ordem) -->
 <script src="script.js" defer></script>
+<!-- Início: Visão 3D gerada com auxílio de IA (Claude Code) -->
+<!-- Arquivo leve; as bibliotecas 3D só são baixadas quando o usuário clica em "3D" -->
+<script src="globo3d.js" defer></script>
+<!-- Fim: Visão 3D gerada com auxílio de IA (Claude Code) -->
 
 <!-- Estilos da página -->
 <link rel="stylesheet" href="style.css">
 </head>
 <body>
+<!-- Céu noturno decorativo (fundo, estrelas e meteoros em CSS; ignorado por leitores de tela) -->
+<div class="ceu" aria-hidden="true">
+  <span class="meteoro"></span>
+  <span class="meteoro"></span>
+  <span class="meteoro"></span>
+  <span class="meteoro"></span>
+</div>
+
 <main>
-  <header>
-    <h1>☄️ Bólidos registrados pelo CNEOS</h1>
-    <p class="intro">
-      Um <strong>bólido</strong> (em inglês, <em>fireball</em>) é um meteoro excepcionalmente
-      brilhante: um fragmento de asteroide que entra na atmosfera e se desintegra liberando
-      muita energia, às vezes equivalente a quilotons de TNT. Os dados vêm da
-      <a href="https://ssd-api.jpl.nasa.gov/doc/fireball.html" target="_blank" rel="noopener">Fireball API</a>
-      do CNEOS (NASA/JPL), coletados diariamente por um pipeline no GitHub Actions e
-      armazenados no Supabase.
-    </p>
-    <p class="atualizacao" id="ultima-execucao">Carregando a última atualização…</p>
+  <!-- Cabeçalho: apresentação do projeto e status do pipeline -->
+  <header class="hero">
+    <div class="hero-texto">
+      <p class="sobretitulo">NASA/JPL · CNEOS · Grupo 07</p>
+      <h1><span class="h1-icone" aria-hidden="true"></span> Bólidos registrados pelo <span class="realce">CNEOS</span></h1>
+      <p class="intro">
+        Um <strong>bólido</strong> (em inglês, <em>fireball</em>) é um meteoro excepcionalmente
+        brilhante: um fragmento de asteroide que entra na atmosfera e se desintegra liberando
+        muita energia, às vezes equivalente a quilotons de TNT.
+      </p>
+      <p class="fluxo-titulo">De onde vêm os dados</p>
+      <ol class="fluxo">
+        <li><a href="https://ssd-api.jpl.nasa.gov/doc/fireball.html" target="_blank" rel="noopener">Fireball API</a><small>CNEOS · NASA/JPL</small></li>
+        <li><span>GitHub Actions</span><small>coleta diária</small></li>
+        <li><span>Supabase</span><small>PostgreSQL</small></li>
+        <li><span>Este painel</span><small>GitHub Pages</small></li>
+      </ol>
+    </div>
+
+    <!-- Preenchido pelo script.js com a última linha da tabela execucoes -->
+    <aside class="status-pipeline" id="ultima-execucao" aria-live="polite">
+      <div class="status-topo">
+        <span class="ponto" aria-hidden="true"></span>
+        <span class="status-rotulo">Última atualização do pipeline</span>
+      </div>
+      <div class="status-data">Carregando…</div>
+    </aside>
   </header>
 
   <div class="aviso" id="carregando" role="status">Carregando os dados…</div>
@@ -103,8 +132,31 @@
     <!-- Mapa e gráfico -->
     <div class="grade">
       <section class="painel" aria-labelledby="titulo-mapa">
-        <h2 id="titulo-mapa">Onde ocorreram</h2>
+        <!-- Início: Visão 3D gerada com auxílio de IA (Claude Code) -->
+        <div class="mapa-cabecalho">
+          <h2 id="titulo-mapa">Onde ocorreram</h2>
+          <div class="mapa-controles">
+            <div class="segmentado" role="group" aria-label="Tipo de visualização do mapa">
+              <button type="button" id="v-2d" aria-pressed="true">2D</button>
+              <button type="button" id="v-3d" aria-pressed="false">3D</button>
+            </div>
+          </div>
+        </div>
+        <!-- Fim: Visão 3D gerada com auxílio de IA (Claude Code) -->
         <div id="mapa" role="region" aria-label="Mapa-múndi dos bólidos"></div>
+        <!-- Início: Visão 3D gerada com auxílio de IA (Claude Code) -->
+        <div class="globo-area" id="globo-area" hidden>
+          <div id="globo" role="region" aria-label="Globo 3D dos bólidos. Arraste para girar e use a roda do mouse ou o gesto de pinça para o zoom."></div>
+          <div class="legenda globo-legenda" id="globo-legenda"></div>
+          <div class="globo-acoes">
+            <button class="botao botao-chuva" id="globo-chuva" type="button">Reproduzir chuva</button>
+            <span class="globo-contagem" id="globo-contagem" aria-live="polite"></span>
+          </div>
+          <div class="globo-info" id="globo-info" hidden></div>
+          <div class="globo-carregando" id="globo-carregando" role="status">Carregando o globo 3D…</div>
+        </div>
+        <p class="aviso-3d" id="aviso-3d" role="status" hidden></p>
+        <!-- Fim: Visão 3D gerada com auxílio de IA (Claude Code) -->
       </section>
       <section class="painel" aria-labelledby="titulo-grafico">
         <h2 id="titulo-grafico">Eventos por ano</h2>
@@ -140,7 +192,7 @@
   </div>
 
   <footer>
-    Fonte: CNEOS — Center for Near Earth Object Studies (NASA/JPL), Fireball API.
+    Fonte: CNEOS: Center for Near Earth Object Studies (NASA/JPL), Fireball API.
     Projeto acadêmico do Grupo 07. Mapa © colaboradores do OpenStreetMap.
   </footer>
 </main>

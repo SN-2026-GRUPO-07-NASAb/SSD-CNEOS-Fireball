@@ -1,40 +1,36 @@
-/* ---------- Cores e medidas (tema claro e escuro) ---------- */
+/* ---------- Cores e medidas (tema de céu noturno, sempre escuro) ---------- */
 :root {
-  --fundo: #f5f6f8;
-  --superficie: #ffffff;
-  --texto: #1b1f24;
-  --texto-suave: #5b6470;
-  --borda: #dde1e6;
-  --destaque: #c2410c;
-  --ok: #15803d;
-  --alerta: #b45309;
-  --erro: #b91c1c;
-  --barra: #ea580c;
-  --raio: 10px;
-}
-@media (prefers-color-scheme: dark) {
-  :root {
-    --fundo: #111418;
-    --superficie: #1a1f25;
-    --texto: #e8eaed;
-    --texto-suave: #9aa3ad;
-    --borda: #2d343c;
-    --destaque: #fb923c;
-    --ok: #4ade80;
-    --alerta: #fbbf24;
-    --erro: #f87171;
-    --barra: #fb923c;
-  }
+  color-scheme: dark; /* selects, barras de rolagem e campos nativos no modo escuro */
+
+  --fundo: #070b18;                         /* campos de formulário */
+  --superficie: rgba(13, 19, 38, .86);      /* painéis translúcidos sobre o céu */
+  --superficie-solida: #0d1326;             /* onde a transparência atrapalha (cabeçalho fixo da tabela, popups) */
+  --texto: #e9edf7;
+  --texto-suave: #a5afc6;
+  --borda: rgba(148, 163, 214, .18);
+  --destaque: #fb923c;
+  --ok: #4ade80;
+  --alerta: #fbbf24;
+  --erro: #f87171;
+  --barra: #fb923c;
+  --raio: 12px;
+  --realce-2: #f472b6;
+  --sombra: 0 10px 30px rgba(0, 0, 0, .35);
+
+  /* Céu: azul-noite no alto, preto embaixo */
+  --ceu-topo: #142a5c;
+  --ceu-meio: #0a1433;
+  --ceu-base: #02030a;
 }
 
 * { box-sizing: border-box; }
 body {
   margin: 0;
-  background: var(--fundo);
+  background: var(--ceu-base); /* cor de segurança caso o céu não carregue */
   color: var(--texto);
   font: 15px/1.5 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
 }
-main { max-width: 1200px; margin: 0 auto; padding: 16px; }
+main { position: relative; max-width: 1200px; margin: 0 auto; padding: 32px 16px 16px; }
 h1 { font-size: 1.7rem; margin: 8px 0 4px; }
 h2 { font-size: 1.15rem; margin: 0 0 12px; }
 a { color: var(--destaque); }
@@ -45,18 +41,243 @@ a { color: var(--destaque); }
   border-radius: var(--raio);
   padding: 16px;
   margin-bottom: 16px;
+  box-shadow: var(--sombra);
 }
 
-/* ---------- Cabeçalho e última atualização ---------- */
-.intro { max-width: 75ch; margin: 0 0 12px; }
-.atualizacao { font-size: .9rem; display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
-.selo {
-  display: inline-block; padding: 1px 8px; border-radius: 999px;
-  font-size: .8rem; font-weight: 600; border: 1px solid currentColor;
+/* =============================================================================
+   Céu noturno: camada fixa atrás de todo o conteúdo
+   - fundo em degradê + estrelas feitas com gradientes (estáticas, sem custo);
+   - cintilar suave: anima só a opacidade de uma camada de estrelas;
+   - meteoros: animam só transform/opacity (processados pela GPU, leves no celular).
+   ============================================================================= */
+.ceu {
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  overflow: hidden;
+  pointer-events: none;
+  background:
+    radial-gradient(ellipse 120% 70% at 50% -10%, var(--ceu-topo) 0%, transparent 70%),
+    linear-gradient(180deg, var(--ceu-meio) 0%, #050816 55%, var(--ceu-base) 100%);
 }
-.selo.concluido { color: var(--ok); }
-.selo.erro_parcial { color: var(--alerta); }
-.selo.erro_critico { color: var(--erro); }
+/* Estrelas: pontos pequenos repetidos em dois tamanhos de grade diferentes */
+.ceu::before,
+.ceu::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background-repeat: repeat;
+}
+.ceu::before {
+  background-image:
+    radial-gradient(1px 1px at 20px 30px, rgba(255, 255, 255, .7), transparent),
+    radial-gradient(1px 1px at 140px 90px, rgba(255, 255, 255, .5), transparent),
+    radial-gradient(1px 1px at 230px 180px, rgba(200, 215, 255, .6), transparent),
+    radial-gradient(1px 1px at 90px 220px, rgba(255, 255, 255, .4), transparent);
+  background-size: 260px 260px;
+  opacity: .8;
+}
+.ceu::after {
+  background-image:
+    radial-gradient(1.5px 1.5px at 60px 110px, rgba(255, 255, 255, .85), transparent),
+    radial-gradient(1.5px 1.5px at 310px 40px, rgba(255, 236, 210, .8), transparent),
+    radial-gradient(1px 1px at 200px 300px, rgba(255, 255, 255, .7), transparent);
+  background-size: 380px 380px;
+  animation: cintilar 6s ease-in-out infinite alternate;
+}
+@keyframes cintilar {
+  from { opacity: .35; }
+  to { opacity: .9; }
+}
+
+/* Meteoros: rastro claro com "cabeça" brilhante, cruzando o céu de vez em quando */
+.meteoro {
+  position: absolute;
+  top: var(--y);
+  left: var(--x);
+  width: 160px;
+  height: 2px;
+  border-radius: 999px;
+  background: linear-gradient(90deg, transparent, rgba(255, 214, 170, .55) 70%, #fff);
+  filter: drop-shadow(0 0 6px rgba(255, 180, 120, .7));
+  opacity: 0;
+  transform: rotate(145deg) translateX(0);
+  animation: cair var(--duracao) linear var(--atraso) infinite;
+  will-change: transform, opacity;
+}
+/* Cada meteoro passa rápido (~12% do ciclo) e some até a próxima volta */
+@keyframes cair {
+  0%   { opacity: 0; transform: rotate(145deg) translateX(0); }
+  2%   { opacity: 1; }
+  10%  { opacity: 1; }
+  12%  { opacity: 0; transform: rotate(145deg) translateX(560px); }
+  100% { opacity: 0; transform: rotate(145deg) translateX(560px); }
+}
+.meteoro:nth-child(1) { --x: 78%; --y: 6%;  --duracao: 11s; --atraso: 1s; }
+.meteoro:nth-child(2) { --x: 46%; --y: 2%;  --duracao: 15s; --atraso: 5s; }
+.meteoro:nth-child(3) { --x: 98%; --y: 30%; --duracao: 13s; --atraso: 9s; }
+.meteoro:nth-child(4) { --x: 30%; --y: 18%; --duracao: 17s; --atraso: 13s; width: 110px; }
+
+/* ---------- Cabeçalho (hero) ---------- */
+.hero {
+  position: relative;
+  overflow: hidden;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 300px;
+  gap: 24px;
+  align-items: center;
+  margin: 8px 0 16px;
+  padding: 28px;
+  border: 1px solid var(--borda);
+  border-radius: 16px;
+  box-shadow: var(--sombra);
+  /* translúcido para o céu aparecer por trás; brilho alaranjado lembra a entrada de um bólido */
+  background:
+    radial-gradient(circle at 92% 0%, rgba(251, 146, 60, .2), transparent 55%),
+    linear-gradient(135deg, rgba(24, 33, 66, .5), rgba(9, 13, 28, .62));
+}
+/* rastro decorativo de meteoro */
+.hero::before {
+  content: "";
+  position: absolute;
+  top: 34px; right: 120px;
+  width: 220px; height: 2px;
+  background: linear-gradient(90deg, transparent, var(--destaque));
+  transform: rotate(-24deg);
+  opacity: .55;
+  pointer-events: none;
+}
+.hero-texto { position: relative; min-width: 0; }
+.sobretitulo {
+  margin: 0 0 6px;
+  font-size: .75rem;
+  font-weight: 700;
+  letter-spacing: .12em;
+  text-transform: uppercase;
+  color: var(--destaque);
+}
+.hero h1 {
+  margin: 0 0 12px;
+  font-size: clamp(1.6rem, 3.6vw, 2.4rem);
+  line-height: 1.15;
+  letter-spacing: -.02em;
+  text-shadow: 0 2px 18px rgba(0, 0, 0, .5);
+}
+.h1-icone { display: inline-block; transform: translateY(-2px); }
+.realce {
+  background: linear-gradient(90deg, var(--destaque), var(--realce-2));
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+.intro {
+  max-width: 62ch;
+  margin: 0 0 18px;
+  font-size: 1.02rem;
+  line-height: 1.65;
+  color: var(--texto-suave);
+}
+.intro strong { color: var(--texto); }
+
+/* Fluxo dos dados: API -> Actions -> Supabase -> painel */
+.fluxo-titulo {
+  margin: 0 0 8px;
+  font-size: .75rem;
+  font-weight: 600;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+  color: var(--texto-suave);
+}
+.fluxo {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 26px;
+}
+.fluxo li {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  padding: 7px 12px;
+  border: 1px solid var(--borda);
+  border-radius: 10px;
+  background: var(--superficie-solida);
+  font-size: .88rem;
+  font-weight: 600;
+  line-height: 1.3;
+}
+.fluxo li small { font-size: .74rem; font-weight: 400; color: var(--texto-suave); }
+.fluxo a { text-decoration: none; }
+.fluxo a:hover { text-decoration: underline; }
+/* seta entre as etapas */
+.fluxo li + li::before {
+  content: "→";
+  position: absolute;
+  left: -20px; top: 50%;
+  transform: translateY(-50%);
+  color: var(--texto-suave);
+  font-weight: 400;
+}
+
+/* ---------- Card de status do pipeline ---------- */
+.status-pipeline {
+  position: relative;
+  padding: 18px;
+  border: 1px solid var(--borda);
+  border-left: 4px solid var(--status-cor, var(--borda));
+  border-radius: 12px;
+  background: var(--superficie-solida);
+  box-shadow: var(--sombra);
+}
+.status-pipeline.concluido { --status-cor: var(--ok); }
+.status-pipeline.erro_parcial { --status-cor: var(--alerta); }
+.status-pipeline.erro_critico { --status-cor: var(--erro); }
+.status-topo { display: flex; align-items: center; gap: 8px; margin-bottom: 10px; }
+.status-rotulo {
+  font-size: .75rem;
+  font-weight: 600;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+  color: var(--texto-suave);
+}
+.ponto {
+  width: 10px; height: 10px; flex: none;
+  border-radius: 50%;
+  background: var(--status-cor, var(--texto-suave));
+}
+/* pulso suave no indicador quando o status é conhecido */
+.status-pipeline.concluido .ponto,
+.status-pipeline.erro_parcial .ponto,
+.status-pipeline.erro_critico .ponto { animation: pulso 2.4s ease-out infinite; }
+@keyframes pulso {
+  0% { box-shadow: 0 0 0 0 color-mix(in srgb, var(--status-cor) 55%, transparent); }
+  70%, 100% { box-shadow: 0 0 0 9px transparent; }
+}
+.status-data {
+  font-size: 1.45rem;
+  font-weight: 700;
+  line-height: 1.2;
+  font-variant-numeric: tabular-nums;
+}
+.status-hora { color: var(--texto-suave); font-weight: 600; }
+.status-fuso { margin-top: 2px; font-size: .8rem; color: var(--texto-suave); }
+.status-rodape {
+  display: flex; flex-wrap: wrap; align-items: center; gap: 8px;
+  margin-top: 14px; padding-top: 12px;
+  border-top: 1px dashed var(--borda);
+  font-size: .85rem;
+  color: var(--texto-suave);
+}
+.status-rodape strong { color: var(--texto); font-variant-numeric: tabular-nums; }
+.selo {
+  display: inline-flex; align-items: center;
+  padding: 2px 10px; border-radius: 999px;
+  font-size: .78rem; font-weight: 700;
+  color: var(--status-cor, var(--texto-suave));
+  background: color-mix(in srgb, var(--status-cor, var(--texto-suave)) 16%, transparent);
+}
 
 /* ---------- Mensagens de carregamento e erro ---------- */
 .aviso { padding: 12px 16px; border-radius: var(--raio); margin-bottom: 16px; border: 1px solid var(--borda); background: var(--superficie); }
@@ -70,12 +291,31 @@ a { color: var(--destaque); }
   width: 100%; padding: 8px 10px; font: inherit; color: var(--texto);
   background: var(--fundo); border: 1px solid var(--borda); border-radius: 8px;
 }
-.botao { cursor: pointer; background: var(--superficie); }
+.filtros select:focus-visible, .filtros input:focus-visible, .botao:focus-visible {
+  outline: 2px solid var(--destaque); outline-offset: 1px;
+}
+.botao { cursor: pointer; background: var(--superficie-solida); }
 .botao:hover { border-color: var(--destaque); }
 
 /* ---------- Cards de resumo ---------- */
 .cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px; margin-bottom: 16px; }
-.card { background: var(--superficie); border: 1px solid var(--borda); border-radius: var(--raio); padding: 14px 16px; }
+.card {
+  position: relative;
+  overflow: hidden;
+  background: var(--superficie);
+  border: 1px solid var(--borda);
+  border-radius: var(--raio);
+  padding: 14px 16px;
+  box-shadow: var(--sombra);
+}
+/* linha de brilho no topo de cada card */
+.card::before {
+  content: "";
+  position: absolute;
+  inset: 0 0 auto 0;
+  height: 2px;
+  background: linear-gradient(90deg, transparent, color-mix(in srgb, var(--destaque) 70%, transparent), transparent);
+}
 .card .rotulo { font-size: .85rem; color: var(--texto-suave); }
 .card .valor { font-size: 1.6rem; font-weight: 700; font-variant-numeric: tabular-nums; }
 .card .detalhe { font-size: .85rem; color: var(--texto-suave); }
@@ -83,20 +323,119 @@ a { color: var(--destaque); }
 /* ---------- Mapa e gráfico ---------- */
 .grade { display: grid; grid-template-columns: 3fr 2fr; gap: 16px; }
 .grade > .painel { margin-bottom: 0; min-width: 0; }
-#mapa { height: 420px; border-radius: 8px; z-index: 0; }
+#mapa { height: 420px; border-radius: 8px; z-index: 0; background: #0b1020; }
+/* Mapa escuro: inverte só os blocos do mapa-base; marcadores e popups mantêm as cores */
+#mapa .leaflet-tile-pane { filter: invert(1) hue-rotate(180deg) brightness(.9) contrast(.9) saturate(.6); }
+#mapa .leaflet-bar a {
+  background: var(--superficie-solida);
+  color: var(--texto);
+  border-bottom-color: var(--borda);
+}
+#mapa .leaflet-bar a:hover { background: #18213d; }
+#mapa .leaflet-control-attribution { background: rgba(7, 11, 24, .75); color: var(--texto-suave); }
+#mapa .leaflet-control-attribution a { color: var(--destaque); }
+#mapa .leaflet-popup-content-wrapper,
+#mapa .leaflet-popup-tip {
+  background: var(--superficie-solida);
+  color: var(--texto);
+  box-shadow: var(--sombra);
+}
+#mapa .leaflet-popup-content-wrapper { border: 1px solid var(--borda); }
+#mapa .leaflet-popup-close-button { color: var(--texto-suave); }
 .grafico-caixa { position: relative; height: 420px; }
-.legenda { background: #fff; color: #1b1f24; padding: 6px 8px; border-radius: 6px; font-size: 12px; line-height: 1.6; box-shadow: 0 1px 4px rgba(0,0,0,.3); }
-.legenda i { display: inline-block; width: 12px; height: 12px; border-radius: 50%; margin-right: 6px; vertical-align: -1px; border: 1px solid rgba(0,0,0,.35); }
+.legenda {
+  background: rgba(13, 19, 38, .92); color: var(--texto);
+  padding: 6px 8px; border-radius: 6px; font-size: 12px; line-height: 1.6;
+  border: 1px solid var(--borda); box-shadow: var(--sombra);
+}
+.legenda i { display: inline-block; width: 12px; height: 12px; border-radius: 50%; margin-right: 6px; vertical-align: -1px; border: 1px solid rgba(255,255,255,.35); }
 .popup dl { margin: 0; display: grid; grid-template-columns: auto auto; gap: 2px 10px; }
-.popup dt { color: #5b6470; }
+.popup dt { color: var(--texto-suave); }
 .popup dd { margin: 0; font-variant-numeric: tabular-nums; }
+
+/* =============================================================================
+   Início: Visão 3D gerada com auxílio de IA (Claude Code)
+   Controle 2D | 3D e o globo 3D com legenda, botão e detalhes.
+   ============================================================================= */
+.mapa-cabecalho {
+  display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between;
+  gap: 8px 12px; margin-bottom: 12px;
+}
+.mapa-cabecalho h2 { margin: 0; }
+.mapa-controles { display: flex; flex-wrap: wrap; align-items: center; justify-content: flex-end; gap: 8px 10px; }
+.segmentado {
+  display: inline-flex; padding: 3px;
+  border: 1px solid var(--borda); border-radius: 999px; background: var(--fundo);
+}
+.segmentado button {
+  all: unset; cursor: pointer;
+  padding: 4px 14px; border-radius: 999px;
+  font-size: .85rem; font-weight: 700; color: var(--texto-suave);
+}
+.segmentado button:hover { color: var(--texto); }
+.segmentado button[aria-pressed="true"] { background: var(--destaque); color: #1a0f05; }
+.segmentado button:focus-visible { outline: 2px solid var(--destaque); outline-offset: 2px; }
+
+.globo-area {
+  position: relative; height: 420px; overflow: hidden; border-radius: 8px;
+  background: radial-gradient(circle at 50% 45%, #10204a 0%, #060a18 58%, #02030a 100%);
+}
+#globo { position: absolute; inset: 0; }
+#globo .float-tooltip-kap {
+  padding: 8px 10px; border: 1px solid var(--borda); border-radius: 8px;
+  background: var(--superficie-solida); color: var(--texto);
+  font: 13px/1.45 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  box-shadow: var(--sombra);
+}
+/* Em telas de toque os detalhes aparecem na caixa .globo-info; o tooltip de mouse ficaria duplicado */
+/* !important: a biblioteca controla a exibição do tooltip por estilo inline */
+@media (hover: none) { #globo .float-tooltip-kap { display: none !important; } }
+.globo-legenda { position: absolute; left: 10px; bottom: 10px; pointer-events: none; }
+.globo-acoes {
+  position: absolute; top: 10px; right: 10px;
+  display: flex; flex-direction: column; align-items: flex-end; gap: 6px;
+}
+.botao-chuva { width: auto; padding: 6px 12px; font-size: .85rem; background: rgba(13, 19, 38, .88); }
+.botao-chuva:disabled { opacity: .55; cursor: progress; }
+.globo-contagem { font-size: .75rem; color: var(--texto-suave); text-shadow: 0 1px 4px #000; }
+.globo-info {
+  position: absolute; right: 10px; bottom: 10px;
+  max-width: min(270px, calc(100% - 20px));
+  padding: 10px 28px 10px 12px;
+  border: 1px solid var(--borda); border-radius: 8px;
+  background: var(--superficie-solida); box-shadow: var(--sombra);
+  font-size: .85rem;
+}
+.globo-info-fechar {
+  all: unset; cursor: pointer;
+  position: absolute; top: 4px; right: 8px;
+  font-size: 1.1rem; line-height: 1; color: var(--texto-suave);
+}
+.globo-info-fechar:focus-visible { outline: 2px solid var(--destaque); }
+.globo-carregando {
+  position: absolute; inset: 0; display: grid; place-items: center;
+  color: var(--texto-suave); background: rgba(2, 3, 10, .55);
+}
+.aviso-3d {
+  margin: 10px 0 0; padding: 8px 12px;
+  border: 1px solid var(--alerta); border-radius: 8px;
+  font-size: .88rem; color: var(--alerta);
+}
+@media (max-width: 800px) {
+  .globo-area { height: 320px; }
+  .globo-legenda { font-size: 11px; }
+  .globo-info { left: 10px; right: 10px; max-width: none; }
+  .globo-area.com-info .globo-legenda { display: none; } /* no celular os detalhes ocupam o rodapé */
+}
+/* Fim: Visão 3D gerada com auxílio de IA (Claude Code) */
 
 /* ---------- Tabela ---------- */
 .tabela-caixa { overflow: auto; max-height: 560px; border: 1px solid var(--borda); border-radius: 8px; }
 table { border-collapse: collapse; width: 100%; font-size: .9rem; }
 th, td { padding: 8px 10px; border-bottom: 1px solid var(--borda); text-align: right; white-space: nowrap; }
 th:first-child, td:first-child { text-align: left; }
-thead th { position: sticky; top: 0; background: var(--superficie); font-weight: 600; z-index: 1; }
+thead th { position: sticky; top: 0; background: var(--superficie-solida); font-weight: 600; z-index: 1; }
+tbody tr:hover { background: rgba(251, 146, 60, .07); }
 td { font-variant-numeric: tabular-nums; }
 th button { all: unset; cursor: pointer; color: var(--destaque); }
 th button:focus-visible { outline: 2px solid var(--destaque); outline-offset: 2px; }
@@ -109,7 +448,38 @@ footer { font-size: .85rem; color: var(--texto-suave); padding: 8px 0 24px; }
   .grade { grid-template-columns: 1fr; }
   #mapa { height: 320px; }
   .grafico-caixa { height: 260px; }
-  h1 { font-size: 1.4rem; }
+  main { padding-top: 20px; }
+  .hero { grid-template-columns: 1fr; padding: 20px; gap: 18px; }
+  .hero::before { right: 24px; width: 140px; }
+  /* No celular o fluxo vira uma grade 2x2 com etapas numeradas, sem setas soltas */
+  .fluxo { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; counter-reset: etapa; }
+  .fluxo li { padding-left: 34px; counter-increment: etapa; }
+  .fluxo li::before,
+  .fluxo li + li::before {
+    content: counter(etapa);
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    left: 10px;
+    width: 18px; height: 18px;
+    display: grid; place-items: center;
+    border-radius: 50%;
+    background: var(--destaque);
+    color: var(--superficie-solida);
+    font-size: .7rem; font-weight: 700;
+  }
+  /* Céu mais leve: só 2 meteoros, mais curtos e sem brilho extra */
+  .meteoro:nth-child(n+3) { display: none; }
+  .meteoro { width: 100px; filter: none; }
+  .meteoro:nth-child(1) { --x: 90%; }
+  .meteoro:nth-child(2) { --x: 60%; }
+}
+
+/* ---------- Quem prefere menos movimento: nada se mexe ---------- */
+@media (prefers-reduced-motion: reduce) {
+  .meteoro { display: none; }
+  .ceu::after { animation: none; opacity: .6; }
+  .ponto { animation: none !important; }
 }
 
 /* ---------- Ajustes que antes estavam inline no HTML ---------- */

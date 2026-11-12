@@ -53,14 +53,6 @@ const formatoUtc = new Intl.DateTimeFormat("pt-BR", {
   minute: "2-digit",
   second: "2-digit",
 });
-const formatoBrasilia = new Intl.DateTimeFormat("pt-BR", {
-  timeZone: "America/Sao_Paulo",
-  day: "2-digit",
-  month: "2-digit",
-  year: "numeric",
-  hour: "2-digit",
-  minute: "2-digit",
-});
 const fmtDataUtc = (d) => (d ? formatoUtc.format(d) : VAZIO);
 const fmtDataSoDia = (d) =>
   d ? d.toLocaleDateString("pt-BR", { timeZone: "UTC" }) : VAZIO;
@@ -194,6 +186,10 @@ function atualizar() {
   atualizarMapa(filtrados);
   atualizarGrafico(filtrados);
   atualizarTabela(filtrados);
+  // Início: Visão 3D gerada com auxílio de IA (Claude Code)
+  // Repassa a mesma lista filtrada ao globo 3D (globo3d.js); não faz nada se ele não estiver aberto.
+  if (typeof atualizarGlobo3d === "function") atualizarGlobo3d(filtrados);
+  // Fim: Visão 3D gerada com auxílio de IA (Claude Code)
 }
 
 function atualizarCards(lista) {
@@ -418,24 +414,42 @@ function alternarOrdem(coluna) {
 /* ---------- Última execução do pipeline ---------- */
 function mostrarUltimaExecucao(execucao) {
   const alvo = $("ultima-execucao");
+  const topo =
+    '<div class="status-topo"><span class="ponto" aria-hidden="true"></span>' +
+    '<span class="status-rotulo">Última atualização do pipeline</span></div>';
+
+  alvo.className = "status-pipeline";
   if (!execucao) {
-    alvo.textContent = "Última atualização do pipeline: não disponível.";
+    alvo.innerHTML = topo + '<div class="status-data">Não disponível</div>';
     return;
   }
+
+  // Data e hora em linhas separadas, no horário de Brasília.
   const quando = new Date(execucao.finalizado_em || execucao.iniciado_em);
-  const dataTexto = Number.isNaN(quando.getTime())
-    ? VAZIO
-    : `${formatoBrasilia.format(quando)} (horário de Brasília)`;
+  const valida = !Number.isNaN(quando.getTime());
+  const dia = valida ? quando.toLocaleDateString("pt-BR", { timeZone: "America/Sao_Paulo" }) : VAZIO;
+  const hora = valida
+    ? quando.toLocaleTimeString("pt-BR", { timeZone: "America/Sao_Paulo", hour: "2-digit", minute: "2-digit" })
+    : "";
+
+  // A classe do status (cor do card) só é aplicada para os três valores conhecidos.
   const status = String(execucao.status ?? "");
-  const classe = NOMES_STATUS[status] ? status : "";
+  if (NOMES_STATUS[status]) alvo.classList.add(status);
   const nome = NOMES_STATUS[status] || status || VAZIO;
   const registros = execucao.registros_processados;
+
   alvo.innerHTML =
-    `<span>Última atualização do pipeline: <strong>${escapeHtml(dataTexto)}</strong></span>` +
-    `<span class="selo ${escapeHtml(classe)}">${escapeHtml(nome)}</span>` +
+    topo +
+    `<div class="status-data">${escapeHtml(dia)}` +
+    (hora ? ` <span class="status-hora">às ${escapeHtml(hora)}</span>` : "") +
+    "</div>" +
+    '<div class="status-fuso">Horário de Brasília</div>' +
+    '<div class="status-rodape">' +
+    `<span class="selo">${escapeHtml(nome)}</span>` +
     (registros === null || registros === undefined
       ? ""
-      : `<span class="suave">${escapeHtml(Number(registros).toLocaleString("pt-BR"))} registros processados</span>`);
+      : `<span><strong>${escapeHtml(Number(registros).toLocaleString("pt-BR"))}</strong> registros processados</span>`) +
+    "</div>";
 }
 
 /* ---------- Mensagens ---------- */
