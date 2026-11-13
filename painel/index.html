@@ -21,12 +21,9 @@
 
 <!-- Lógica do painel (defer: roda depois do Leaflet e do Chart.js, na ordem) -->
 <script src="script.js" defer></script>
-<!-- Início: Visão 3D gerada com auxílio de IA (Claude Code) -->
 <!-- Arquivo leve; as bibliotecas 3D só são baixadas quando o usuário clica em "3D" -->
 <script src="globo3d.js" defer></script>
-<!-- Fim: Visão 3D gerada com auxílio de IA (Claude Code) -->
 
-<!-- Estilos da página -->
 <link rel="stylesheet" href="style.css">
 </head>
 <body>
@@ -132,7 +129,7 @@
     <!-- Mapa e gráfico -->
     <div class="grade">
       <section class="painel" aria-labelledby="titulo-mapa">
-        <!-- Início: Visão 3D gerada com auxílio de IA (Claude Code) -->
+
         <div class="mapa-cabecalho">
           <h2 id="titulo-mapa">Onde ocorreram</h2>
           <div class="mapa-controles">
@@ -142,9 +139,8 @@
             </div>
           </div>
         </div>
-        <!-- Fim: Visão 3D gerada com auxílio de IA (Claude Code) -->
+
         <div id="mapa" role="region" aria-label="Mapa-múndi dos bólidos"></div>
-        <!-- Início: Visão 3D gerada com auxílio de IA (Claude Code) -->
         <div class="globo-area" id="globo-area" hidden>
           <div id="globo" role="region" aria-label="Globo 3D dos bólidos. Arraste para girar e use a roda do mouse ou o gesto de pinça para o zoom."></div>
           <div class="legenda globo-legenda" id="globo-legenda"></div>
@@ -156,7 +152,7 @@
           <div class="globo-carregando" id="globo-carregando" role="status">Carregando o globo 3D…</div>
         </div>
         <p class="aviso-3d" id="aviso-3d" role="status" hidden></p>
-        <!-- Fim: Visão 3D gerada com auxílio de IA (Claude Code) -->
+
       </section>
       <section class="painel" aria-labelledby="titulo-grafico">
         <h2 id="titulo-grafico">Eventos por ano</h2>
