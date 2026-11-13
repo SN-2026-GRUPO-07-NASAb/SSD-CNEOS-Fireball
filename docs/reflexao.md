@@ -37,7 +37,7 @@ Aprendemos que a qualidade da resposta dependia da qualidade do pedido. Prompts 
 
 **Velocidade em tarefas repetitivas.** Comentários no SQL, estilos CSS, tratamento de campos nulos e a estrutura inicial da documentação seriam trabalhosos de escrever do zero. A IA acelerou essas partes e deixou mais tempo para entendermos e validarmos o projeto.
 
-**Explicações.** Ao final de cada tarefa, pedíamos que a IA explicasse as decisões (deduplicação, upsert, RLS, paginação).
+**Explicações.** Ao final de cada tarefa, pedíamos que a IA explicasse as decisões.
 
 ---
 
@@ -55,7 +55,6 @@ A correção separou as conexões e passou a mascarar a chave nos logs e na tabe
 
 - No primeiro rascunho do tutorial, a IA usou um exemplo de JSON fictício, que depois foi trocado por um registro real da API.
 - Em uma tarefa de layout, a sessão foi interrompida antes de a IA concluir a verificação das animações e do celular. A resposta parecia completa, mas não estava: precisamos conferir no navegador.
-- A IA alertou que os nomes dos menus do Supabase mudam com frequência, ou seja, parte das instruções que ela gera pode estar desatualizada.
 
 ### 3.3 Excesso de complexidade
 
@@ -63,15 +62,13 @@ Em vários momentos a IA entregou mais do que pedimos: trigger, CHECKs extras, c
 
 ---
 
-## 4. O que o grupo corrigimos e verificamos
+## 4. O que corrigimos e verificamos
 
 - Pedimos uma revisão de segurança do pipeline, que revelou o vazamento da chave.
-- [Trocamos a secret key no Supabase, revogamos a antiga e atualizamos o secret `SUPABASE_SERVICE_KEY` no GitHub.]
-- [Fizemos commit e push da versão corrigida e confirmamos no Actions e na tabela `execucoes` que a produção passou a usar o script novo.]
-- Pedimos a mudança do painel para a raiz do repositório, conforme a estrutura exigida.
+- Trocamos a secret key no Supabase, revogamos a antiga e atualizamos o secret `SUPABASE_SERVICE_KEY` no GitHub.
+- Fizemos commit e push da versão corrigida e confirmamos no Actions e na tabela `execucoes` que a produção passou a usar o script novo.
 - Conferimos manualmente no navegador o layout e as animações após a tarefa interrompida.
 - Executamos o `setup.sql` no Supabase, rodamos o workflow e validamos os dados no Table Editor e na API REST.
-- Fizemos uma auditoria final com a IA e classificamos os achados por gravidade. [Aplicamos as correções X, Y e Z / deixamos os itens de baixa gravidade como melhorias futuras.]
 - Confirmamos que não há nenhuma secret key nos arquivos do repositório e que um POST com a publishable key é bloqueado (HTTP 401).
 
 ---
@@ -92,14 +89,11 @@ Em vários momentos a IA entregou mais do que pedimos: trigger, CHECKs extras, c
 
 1. **Pedir revisão de segurança logo após a primeira versão** de qualquer código que lida com chaves, e não só no final.
 2. **Fazer commit e push logo após cada correção validada**, para que local e produção não fiquem diferentes.
-3. **Incluir todos os requisitos da atividade em todo prompt relevante**, como a estrutura de pastas.
-4. **Pedir soluções mais simples** quando o objetivo não exige complexidade, para que o grupo consiga entender e manter todo o código.
-5. **Registrar cada interação no momento em que acontece**, em vez de reconstruir o histórico depois.
 
 ---
 
 ## 7. Conclusão
 
-A IA acelerou muito o desenvolvimento e nos ajudou a entender conceitos como upsert, RLS e deduplicação. Ao mesmo tempo, o projeto mostrou que ela não substitui o julgamento de quem está desenvolvendo: o erro mais grave do projeto foi gerado pela própria IA e passou despercebido enquanto o sistema parecia funcionar.
+A IA acelerou muito o desenvolvimento e nos ajudou a entender diversos conceitos. Ao mesmo tempo, o projeto mostrou que ela não substitui o julgamento de quem está desenvolvendo: o erro mais grave do projeto foi gerado pela própria IA e passou despercebido enquanto o sistema parecia funcionar.
 
 O que fez diferença foi tratar cada resposta como uma proposta a ser verificada, e não como uma solução pronta. A IA escreveu boa parte do código; a responsabilidade de definir o que construir, testar o que foi entregue e garantir que o sistema estivesse seguro continuou sendo nossa.

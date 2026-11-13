@@ -1,21 +1,15 @@
 # Histórico de Interação com IA
 
-> Preencha este arquivo ao longo do desenvolvimento do projeto.
-> Registre TODOS os prompts utilizados — mesmo os que não funcionaram.
-> Este documento é parte obrigatória da avaliação.
-
----
-
 ## Informações gerais
 
-| Campo                  | Valor                                      |
-| ---------------------- | ------------------------------------------ |
-| **Grupo**              | \[Grupo 7 - SSD/CNEOS Fireball]            |
-| **Integrantes**        | \[Lucas Hein], \[João Miranda], \[Marcelo] |
-| **API NASA escolhida** | \[SSD/CNEOS Fireball]                      |
-| **IA utilizada**       | \[Claude]                                  |
-| **Data de início**     | 30-09-2026                                 |
-| **Data de conclusão**  | DD-MM-AAAA                                 |
+| Campo                  | Valor                              |
+| ---------------------- | ---------------------------------- |
+| **Grupo**              | Grupo 7 - SSD/CNEOS Fireball       |
+| **Integrantes**        | Lucas Hein, João Miranda, Marcelo. |
+| **API NASA escolhida** | SSD/CNEOS Fireball.                |
+| **IA utilizada**       | Claude                             |
+| **Data de início**     | 30-09-2026                         |
+| **Data de conclusão**  | 13-11-2026                         |
 
 ---
 
@@ -70,11 +64,13 @@ como a segurança (RLS + GRANTs) funciona, porque preciso documentar isso.
 Recebemos o `sql/setup.sql` com a tabela dos bólidos, a tabela `execucoes`, UNIQUE na data/hora do evento, RLS com leitura pública e GRANTs explícitos, além de uma explicação sobre a chave natural e a segurança.
 
 **O que funcionou:**
+
 - Pedimos que a IA consultasse a API antes de escrever, o que evitou colunas inventadas.
 - Como listamos os requisitos no prompt, UNIQUE, RLS e GRANTs vieram desde a primeira versão.
 - A explicação final nos ajudou a entender a segurança do banco.
 
 **O que precisou ajuste:**
+
 - A validação usou só 5 registros. Para ter certeza sobre nulos, tipos e duplicatas, pedimos um refinamento com a base completa (Interação 2).
 
 ---
@@ -138,12 +134,13 @@ Ao final, responda com:
 Com a base completa (1074 registros, de 1988 a 2026), a IA ajustou o script: tabela renomeada para `bolidos`, NOT NULL só em data e energias, tipos `numeric` dimensionados pelos valores reais, CHECKs de faixa, chave `data_hora_utc` confirmada sem duplicatas, trigger de `atualizado_em`, índices para o painel e `REVOKE ALL` antes dos GRANTs.
 
 **O que funcionou:**
+
 - A validação com dados reais trocou suposições por números (nulos, maiores valores, ausência de duplicatas).
 - O script atende todos os requisitos, continua idempotente e não tem chaves nem URLs.
 
 **O que precisou ajuste:**
+
 - Nenhum: rodamos o script no SQL Editor e funcionou de primeira.
-- Anotamos para a etapa seguinte que `vx`, `vy` e `vz` só vêm com `vel-comp=true`.
 
 ---
 
@@ -217,10 +214,12 @@ Ao final:
 Recebemos o script, o `requirements.txt` e o workflow (diário às 06:17 UTC e manual, com `permissions`, `concurrency` e `timeout-minutes`). O script normaliza, deduplica, envia em lotes de 500 com upsert e registra em `execucoes`. O `--dry-run` retornou 1074 registros em 3 lotes.
 
 **O que funcionou:**
+
 - O `--dry-run` nos deixou testar sem expor a secret key.
 - Depois de cadastrarmos os secrets e rodarmos o workflow, ele ficou verde e o Supabase recebeu os 1074 registros com status `concluido`.
 
 **O que precisou ajuste:**
+
 - Esta versão tinha uma falha grave que não percebemos nos testes: a secret key era enviada também para a API da NASA. Só descobrimos na revisão de segurança (Interação 6).
 
 ---
@@ -272,10 +271,12 @@ escapeHtml(), porque preciso documentar isso.
 Recebemos o painel com mapa Leaflet, cards, gráfico por ano, tabela ordenável, filtros (anos, energia mínima e hemisfério), card de última atualização, paginação de 1000 em 1000 e `escapeHtml()` em todos os valores externos.
 
 **O que funcionou:**
+
 - O painel carregou os 1074 registros (888 no mapa), contornando o limite de 1000 linhas.
 - Os filtros atualizam tudo ao mesmo tempo, e só a publishable key é usada no navegador.
 
 **O que precisou ajuste:**
+
 - A IA ignorou dois pontos do prompt: dividiu o painel em três arquivos e os colocou numa pasta `painel/`, quando a atividade exige o `index.html` na raiz. Identificamos e ajustamos a publicação.
 - Preenchemos manualmente a URL do projeto e a publishable key no `script.js`.
 
@@ -305,11 +306,13 @@ Concluído
 O bloco de apresentação virou um quadro em degradê com rastro de meteoro e o fluxo "De onde vêm os dados" (API → Actions → Supabase → Painel). O card de última atualização ganhou data em destaque e cor por status (verde, amarelo ou vermelho). No `script.js`, só a função `mostrarUltimaExecucao()` mudou, mantendo o `escapeHtml()`.
 
 **O que funcionou:**
+
 - O visual ficou coerente com o tema de meteoros, no desktop e no celular.
 - A IA mexeu só no front e preservou as alterações que tínhamos feito no `index.html`.
 - O fluxo "De onde vêm os dados" vai nos ajudar a explicar a arquitetura no seminário.
 
 **O que precisou ajuste:**
+
 - Nenhum. Percebemos, porém, que prompts com restrições claras dão resultados mais previsíveis do que um pedido informal, e passamos a escrevê-los assim.
 
 ---
@@ -338,12 +341,14 @@ mudou e por quê, e o que já estava correto.
 A IA encontrou uma falha grave: a consulta à NASA e o envio ao Supabase usavam a mesma conexão, e a secret key ia para `ssd-api.jpl.nasa.gov` em toda execução. Ela comprovou o vazamento na versão antiga e corrigiu com conexões separadas e a chave mascarada (`***`) nos logs e em `execucoes`. Também melhorou timeouts, validação antes do envio, registro de erros inesperados e legibilidade, e atualizou o `requests` por causa da CVE-2024-47081. Os testes com servidores falsos cobriram 7 cenários, todos com o status esperado.
 
 **O que funcionou:**
+
 - A revisão encontrou um vazamento real que não tínhamos percebido.
 - Os testes validaram todos os status sem usar a chave nem o banco real.
 
 **O que precisou ajuste:**
+
 - **Erro da própria IA:** foi ela que gerou a versão com o vazamento (Interação 3). Aprendemos que código de IA precisa de revisão de segurança mesmo quando funciona.
-- [Geramos uma nova secret key no Supabase, revogamos a antiga e atualizamos o secret `SUPABASE_SERVICE_KEY` no GitHub em DD-MM-2026.]
+- Geramos uma nova secret key no Supabase, revogamos a antiga e atualizamos o secret `SUPABASE_SERVICE_KEY` no GitHub.
 - A correção ficou só na nossa máquina até a auditoria da Interação 10.
 
 ---
@@ -371,10 +376,12 @@ Teste no desktop e no celular e me diga o que mudou.
 A IA alterou só HTML e CSS: céu em degradê com estrelas cintilantes, quatro meteoros animados (dois no celular), paleta sempre escura com painéis translúcidos, mapa escuro e suporte a `prefers-reduced-motion`.
 
 **O que funcionou:**
+
 - O painel ficou imersivo e legível, sem mudanças na lógica de dados.
 - As animações usam só `transform` e `opacity`, leves no celular.
 
 **O que precisou ajuste:**
+
 - A IA teve falhas ao gravar o CSS e ao subir o servidor de testes, e corrigiu as duas.
 - A tarefa foi interrompida antes de verificar as animações, então conferimos no navegador.
 - O tema claro foi removido; mantivemos assim por combinar com o céu noturno.
@@ -417,10 +424,12 @@ Não coloque nenhuma chave no README.
 A partir da estrutura e dos tópicos que definimos, a IA leu os arquivos do projeto e montou o rascunho do README: campos da API, diagrama Mermaid, modelagem, upsert e erro 21000, segurança, configuração, links e integrantes.
 
 **O que funcionou:**
+
 - Basear o texto nos arquivos reais evitou divergências com o código.
 - O roteiro do prompt garantiu todos os itens exigidos, sem chaves nem URLs do projeto.
 
 **O que precisou ajuste:**
+
 - A IA alertou que os links para `docs/` quebrariam se os arquivos não existissem; criamos os dois arquivos.
 - Revisamos o texto antes da entrega.
 
@@ -451,10 +460,12 @@ devo inserir capturas de tela. Baseie-se nos arquivos reais do repositório.
 Seguindo o roteiro que definimos, a IA preparou um rascunho com 11 seções, 13 problemas comuns com solução e 17 marcações `[PRINT]` para inserirmos as capturas.
 
 **O que funcionou:**
+
 - O roteiro do prompt deu ao tutorial a sequência certa para replicar o projeto.
 - As marcações de print deixaram claro onde inserir cada evidência.
 
 **O que precisou ajuste:**
+
 - O rascunho trazia um JSON fictício, trocado por um registro real da API.
 - A IA alertou que os menus do Supabase mudam e que os números dos logs precisavam ser conferidos.
 - Ficaram conosco as capturas, a conferência, a revisão final e a conversão para PDF.
@@ -477,21 +488,21 @@ back-end, workflow e front-end, ou alerta que eu possa revisar.
 A IA revisou os quatro componentes e testou a produção só com a publishable key. O achado mais grave: o GitHub ainda rodava o script antigo, com o vazamento, porque não tínhamos enviado a correção. Ela também apontou a falta de `.gitignore`, a necessidade de trocar a chave e problemas de gravidade média e baixa (trigger atualizando tudo, KeyError, workflow desativado após 60 dias, falta de CSP, entre outros).
 
 **O que funcionou:**
+
 - Descobrimos que a correção do vazamento ainda não estava em produção.
 - A IA confirmou que o RLS bloqueia gravação com a publishable key (HTTP 401) e que não há secret key nos arquivos.
 - A classificação por gravidade nos ajudou a priorizar.
 
 **O que precisou ajuste:**
-- [Fizemos commit e push da versão corrigida, criamos o `.gitignore` e trocamos a secret key em DD-MM-2026.]
-- [Aplicamos as correções X, Y e Z / deixamos os itens de média e baixa gravidade como melhorias futuras.]
-- [Rodamos o workflow de novo: verde e com a mensagem no formato novo.]
+
+- Fizemos commit e push da versão corrigida, trocamos a secret key.
 
 ---
 
 ## Interação 11 — Visão 3D do globo com chuva de meteoros
 
 **Data:** 12-11-2026  
-**Objetivo:** Adicionar uma alternância entre o mapa 2D e um globo 3D, onde os bólidos filtrados caem como chuva de meteoros na localização exata. Só front-end, identificado no site e no código como feito com auxílio de IA.
+**Objetivo:** Adicionar uma alternância entre o mapa 2D e um globo 3D, onde os bólidos filtrados caem como chuva de meteoros na localização exata. Só front-end.
 
 **Prompts enviados à IA:**
 
@@ -574,16 +585,18 @@ Quando eu seleciono apenas 2026 a animação dos meteoros fica bugada, resolva p
 A IA criou o `globo3d.js` e alterou pouco o restante (só uma linha no `script.js`). A globe.gl 2.46.2 só é baixada no primeiro clique em "3D" (lazy load, com SRI). Os meteoros caem em sequência na latitude/longitude exatas, com a mesma escala de cores do 2D. Nos prompts seguintes, a Terra passou a aparecer de dia e o rastro virou fogo em camadas, com entrada oblíqua. Por fim, a IA corrigiu o bug do filtro 2026: a biblioteca reiniciava os rastros a cada meteoro novo.
 
 **O que funcionou:**
+
 - O 2D, os filtros, os cards e a tabela continuaram idênticos.
 - O fallback sem WebGL e o modo "reduzir movimento" funcionaram.
 - Conferimos a localização com o bólido de Chelyabinsk (2013), que cai na Rússia.
 - O recurso está identificado no site e no código como feito com auxílio de IA.
 
 **O que precisou ajuste:**
+
 - As texturas da globe.gl davam 404; a IA trocou pelas do three-globe.
 - A IA corrigiu bugs que os próprios testes acharam (botão de chuva travado e tooltip duplicado) e afinou o desempenho após a Terra de dia e o fogo.
 - Encontramos um bug que os testes da IA não pegaram: com só 2026, os rastros voltavam ao topo. Corrigimos com o terceiro prompt.
-- Os testes da IA rodaram só no Chrome headless. [Testamos a fluidez num computador e num celular reais.]
+- Os testes da IA rodaram só no Chrome headless. Testamos a fluidez num computador e num celular reais.
 
 ---
 
@@ -608,4 +621,4 @@ A IA criou o `globo3d.js` e alterou pouco o restante (só uma linha no `script.j
 - A IA às vezes entrega mais complexidade do que o necessário
 
 **Avaliação geral do uso da IA:**
-A IA acelerou muito o desenvolvimento e nos ajudou a entender conceitos como upsert, RLS, deduplicação e paginação. Os melhores resultados vieram de prompts com contexto e restrições claras, e de pedidos de validação com dados reais e testes. Ao mesmo tempo, o projeto mostrou que a IA não substitui revisão: o vazamento da secret key passou despercebido enquanto tudo parecia funcionar e só foi encontrado porque nós pedimos uma revisão de segurança. Bugs visuais e requisitos ignorados também foram identificados. Concluímos que a IA é uma ferramenta poderosa para gerar e revisar código, mas a responsabilidade de definir o que construir, testar e garantir a segurança continua sendo de quem desenvolve. A análise completa está em `docs/reflexao.md`.
+A IA acelerou muito o desenvolvimento e nos ajudou a entender diversos conceitos. Os melhores resultados vieram de prompts com contexto e restrições claras, e de pedidos de validação com dados reais e testes. Ao mesmo tempo, o projeto mostrou que a IA não substitui revisão: o vazamento da secret key passou despercebido enquanto tudo parecia funcionar e só foi encontrado porque nós pedimos uma revisão de segurança. Bugs visuais e requisitos ignorados também foram identificados. Concluímos que a IA é uma ferramenta poderosa para gerar e revisar código, mas a responsabilidade de definir o que construir, testar e garantir a segurança continua sendo de quem desenvolve. A análise completa está em `docs/reflexao.md`.
