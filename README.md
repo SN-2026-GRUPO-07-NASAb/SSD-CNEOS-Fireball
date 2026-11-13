@@ -1,9 +1,9 @@
 # SSD-CNEOS-Fireball: bólidos registrados pela NASA/JPL
 
-Projeto acadêmico do **Grupo 07**: um pipeline coleta todo dia os dados da API **SSD/CNEOS Fireball** (NASA/JPL), grava em um banco PostgreSQL no **Supabase** e publica um painel interativo no **GitHub Pages**.
+Um pipeline coleta todo dia os dados da API **SSD/CNEOS Fireball** (NASA/JPL), grava em um banco PostgreSQL no **Supabase** e publica um painel interativo no **GitHub Pages**.
 
-- **Painel:** https://sn-2026-grupo-07-nasa.github.io/SSD-CNEOS-Fireball/
-- **Repositório:** https://github.com/SN-2026-GRUPO-07-NASA/SSD-CNEOS-Fireball
+- **Painel:** https://sn-2026-grupo-07-nasab.github.io/SSD-CNEOS-Fireball/
+- **Repositório:** https://github.com/SN-2026-GRUPO-07-NASAb/SSD-CNEOS-Fireball
 
 ---
 
@@ -267,17 +267,6 @@ Para gravar de verdade localmente, exporte `SUPABASE_URL` e `SUPABASE_SERVICE_KE
 | Marcelo | **Pipeline de coleta:** `scripts/fetch_nasa.py` |
 
 A **documentação** (este README e a pasta `docs/`) foi feita pelos três integrantes em conjunto.
-
----
-
-## Uso de IA
-
-Usamos o **Claude Code** no terminal como assistente durante o desenvolvimento.
-
-- O histórico das interações está em [`docs/ai-interaction.md`](docs/ai-interaction.md).
-- A análise crítica sobre o uso da ferramenta está em [`docs/reflexao.md`](docs/reflexao.md).
-
----
 
 ## Fonte dos dados
 
